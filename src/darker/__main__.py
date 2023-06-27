@@ -539,12 +539,12 @@ def main(  # pylint: disable=too-many-locals,too-many-branches,too-many-statemen
                 " See https://github.com/akaihola/darker/issues/180 for details.",
                 stacklevel=2,
             )
-        elif revrange.rev2 not in {STDIN, WORKTREE}:
-            raise ArgumentError(
-                Action(["-r", "--revision"], "revision"),
-                f"Can't write reformatted files for revision {revrange.rev2!r}."
-                " Either --diff or --check must be used.",
-            )
+        # elif revrange.rev2 not in {STDIN, WORKTREE}:
+        #     raise ArgumentError(
+        #         Action(["-r", "--revision"], "revision"),
+        #         f"Can't write reformatted files for revision {revrange.rev2!r}."
+        #         " Either --diff or --check must be used.",
+        #     )
 
     if revrange.rev2 != STDIN:
         missing = get_missing_at_revision(paths, revrange.rev2, root)
