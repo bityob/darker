@@ -34,15 +34,13 @@ for how this result is further processed with:
 """
 import inspect
 import logging
-import sys
 from pathlib import Path
-from typing import Collection, Optional, Pattern, Set, Tuple, Union
+from typing import Collection, Optional, Pattern, Set, Tuple, TypedDict, Union
 
 # `FileMode as Mode` required to satisfy mypy==0.782. Strange.
 from black import FileMode as Mode
 from black import (
     TargetVersion,
-    find_pyproject_toml,
     format_str,
     parse_pyproject_toml,
     re_compile_maybe_verbose,
@@ -54,13 +52,9 @@ from black.const import (  # pylint: disable=no-name-in-module
 from black.files import gen_python_files
 from black.report import Report
 
-from darker.config import ConfigurationError
-from darker.utils import TextDocument
-
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
+from darker.files import find_pyproject_toml
+from darkgraylib.config import ConfigurationError
+from darkgraylib.utils import TextDocument
 
 __all__ = ["BlackConfig", "Mode", "run_black"]
 
@@ -155,8 +149,10 @@ def filter_python_files(
     kwargs = {"verbose": False, "quiet": False} if "verbose" in sig.parameters else {}
     # `gitignore=` was replaced with `gitignore_dict=` in black==22.10.1.dev19+gffaaf48
     for param in sig.parameters:
-        if param.startswith("gitignore"):
+        if param == "gitignore":
             kwargs[param] = None  # type: ignore[assignment]
+        elif param == "gitignore_dict":
+            kwargs[param] = {}  # type: ignore[assignment]
     absolute_paths = {p.resolve() for p in paths}
     directories = {p for p in absolute_paths if p.is_dir()}
     files = {p for p in absolute_paths if p not in directories}

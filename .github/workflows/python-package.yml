@@ -9,6 +9,8 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - master
 
+env:
+  PY_IGNORE_IMPORTMISMATCH: 1
 
 jobs:
 
@@ -17,8 +19,8 @@ jobs:
     outputs:
       wheel-path: ${{ steps.get-darker-version.outputs.wheel-path }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
       - name: Install wheel
         run: python -m pip install wheel
       - name: Build wheel distribution
@@ -46,31 +48,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            python-version: python310
-          - os: macos-latest
-            python-version: python39
-            # see https://github.com/cachix/install-nix-action/issues/135
+        os:
+          - ubuntu-latest
+          - macos-latest
     needs:
       - build-wheel
     steps:
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v18
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v22
         with:
-          nix_path: nixpkgs=channel:nixos-21.11
+          nix_path: nixpkgs=channel:nixos-unstable
       - name: Download wheel uploaded by the build-wheel job
         uses: actions/download-artifact@v3
       - name: Run tests in nix-shell
         run: |
           nix-shell \
             --pure \
-            --argstr pythonVersion ${{ matrix.python-version }} \
             --run '
               python -m venv venv
               source venv/bin/activate
+              cert_file=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt
+              export NIX_SSL_CERT_FILE=$cert_file
               pip install "${{needs.build-wheel.outputs.wheel-path}}[test]"
-              pytest
+              # Run tests in installed package to avoid plugin import issue:
+              pytest $(python -c "
+          import os, darker
+          print(os.path.dirname(darker.__file__))
+              ")
             ' \
             ./default.nix
 
@@ -84,60 +88,58 @@ jobs:
           - windows-latest
           - macos-latest
         python-version:
-          - '3.7'
           - '3.8'
           - '3.9'
           - '3.10'
           - '3.11'
-          - '3.12-dev'
-        constraints: ['black==22.12.0']
+          - '3.12'
+          - '3.13-dev'
+        constraints: ['']
+        post_install: ['']
         include:
           - os: ubuntu-latest
-            python-version: '3.7'
+            python-version: '3.8'
             constraints: '--constraint constraints-oldest.txt'
           - os: ubuntu-latest
-            python-version: '3.11'
-            constraints: '--constraint constraints-future.txt'
-            upgrade: '--upgrade --upgrade-strategy=eager'
+            python-version: '3.12'
+            post_install: pip uninstall -y -r constraints-future.txt ;
+                          pip install -r constraints-future.txt
+                                      --upgrade --upgrade-strategy=eager
     needs:
       - build-wheel
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           # need full history since Pytest runs Darker itself below
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Download wheel uploaded by the build-wheel job
         uses: actions/download-artifact@v3
-      - name: Install Darker and its dependencies from the wheel build earlier
+      - name: Install Darker and its dependencies from the wheel built earlier
         run: pip install "${{needs.build-wheel.outputs.wheel-path}}[test]"
                          ${{ matrix.upgrade }} ${{ matrix.constraints }}
+      - name: Upgrade Black, Flynt and Isort from GitHub if future constraints are used
+        # This can't be done in the same Pip invocation as installing Darker
+        # since Darker might place an upper limit on Black, Flynt and/or Isort during
+        # compatibility fixing periods.
+        if: matrix.post_install
+        run: ${{ matrix.post_install }}
       - name: Downgrade target-version when running oldest supported Black
         if: matrix.constraints == '--constraint constraints-oldest.txt'
         run: |
-          sed -i 's/py311/py39/' pyproject.toml
-      - name: Run Pytest with the Darker plugin on recent Black versions
-        if: matrix.constraints != '--constraint constraints-oldest.txt'
-        run: |
-          pytest --darker
-      - name: Run Pytest without the Darker plugin on oldest Black version
-        # The reformatting rules used to be a bit different. We don't need to
-        # test reformatting Darker's own code base with old Black versions.
-        # Interoperability is ensured by unit tests.
-        if: matrix.constraints == '--constraint constraints-oldest.txt'
-        run: |
-          pytest
+          sed -i 's/, "py311", "py312"//' pyproject.toml
+      - run: pytest
 
   build-sdist-validate-dists:
     runs-on: ubuntu-latest
     needs:
       - build-wheel
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
       - name: Install twine
         run: python -m pip install twine
       - name: Download wheel uploaded by the build-wheel job

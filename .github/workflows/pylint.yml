@@ -8,14 +8,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
       - name: Install dependencies for running Pylint
         run: |
           pip install -U \
             airium \
             black \
+            git+https://github.com/akaihola/darkgraylib.git@main \
             defusedxml \
+            git+https://github.com/akaihola/graylint.git@main \
             pip-requirements-parser \
             pygments \
             pylint \
@@ -26,7 +28,7 @@ jobs:
             ruamel.yaml \
             toml
           pip list
-      - uses: wearerequired/lint-action@v2.1.0
+      - uses: wearerequired/lint-action@v2.3.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pylint: true

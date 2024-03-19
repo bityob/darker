@@ -5,7 +5,9 @@
 # pylint: disable=use-dict-literal
 
 import logging
+import random
 import re
+import string
 from argparse import ArgumentError
 from io import BytesIO
 from pathlib import Path
@@ -17,15 +19,23 @@ import pytest
 
 import darker.__main__
 import darker.import_sorting
-import darker.linting
 from darker.config import Exclusions
 from darker.exceptions import MissingPackageError
-from darker.git import WORKTREE, EditedLinenumsDiffer, RevisionRange
+from darker.git import EditedLinenumsDiffer
 from darker.tests.helpers import isort_present
 from darker.tests.test_fstring import FLYNTED_SOURCE, MODIFIED_SOURCE, ORIGINAL_SOURCE
-from darker.tests.test_highlighting import BLUE, CYAN, RESET, WHITE, YELLOW
-from darker.utils import TextDocument, joinlines
 from darker.verification import NotEquivalentError
+from darkgraylib.git import WORKTREE, RevisionRange
+from darkgraylib.testtools.highlighting_helpers import BLUE, CYAN, RESET, WHITE, YELLOW
+from darkgraylib.utils import TextDocument, joinlines
+
+pytestmark = pytest.mark.usefixtures("find_project_root_cache_clear")
+
+
+def randomword(length: int) -> str:
+    """Create a random string of lowercase letters of a given length."""
+    letters = string.ascii_lowercase
+    return "".join(random.choice(letters) for _i in range(length))  # nosec
 
 
 def _replace_diff_timestamps(text, replacement="<timestamp>"):
@@ -47,7 +57,7 @@ def test_isort_option_without_isort(git_repo, caplog):
 
 
 @pytest.fixture
-def run_isort(git_repo, monkeypatch, caplog, request, find_project_root_cache_clear):
+def run_isort(git_repo, monkeypatch, caplog, request):
     """Fixture for running Darker with requested arguments and a patched `isort`
 
     Provides an `run_isort.isort_code` mock object which allows checking whether and how
@@ -550,7 +560,6 @@ def test_main(
     git_repo,
     monkeypatch,
     capsys,
-    find_project_root_cache_clear,
     arguments,
     newline,
     pyproject_toml,
@@ -653,9 +662,7 @@ def test_main_in_plain_directory(tmp_path, capsys):
     "encoding, text", [(b"utf-8", b"touch\xc3\xa9"), (b"iso-8859-1", b"touch\xe9")]
 )
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
-def test_main_encoding(
-    git_repo, find_project_root_cache_clear, encoding, text, newline
-):
+def test_main_encoding(git_repo, encoding, text, newline):
     """Encoding and newline of the file is kept unchanged after reformatting"""
     paths = git_repo.add({"a.py": newline.decode("ascii")}, commit="Initial commit")
     edited = [b"# coding: ", encoding, newline, b's="', text, b'"', newline]
@@ -909,8 +916,12 @@ def test_modify_file(tmp_path, new_content, expect):
             f'{CYAN}print{RESET}({YELLOW}"{RESET}{YELLOW}foo{RESET}{YELLOW}"{RESET})\n',
             # Pygments >=2.4.x, <2.14.0
             f'{BLUE}print{RESET}({YELLOW}"{RESET}foo{YELLOW}"{RESET})\n',
+            f'{BLUE}print{RESET}({YELLOW}"{RESET}{YELLOW}foo{RESET}{YELLOW}"{RESET})\n',
             # Pygments 2.14.0, variant 1:
             f'{CYAN}print{RESET}({YELLOW}"{RESET}foo{YELLOW}"{RESET}){WHITE}{RESET}\n',
+            # Pygments 2.17.2
+            f'{CYAN}print{RESET}({YELLOW}"{RESET}{YELLOW}foo{RESET}{YELLOW}"{RESET})'
+            f"{WHITE}{RESET}\n",
         ),
     ),
 )
@@ -929,3 +940,22 @@ def test_stdout_path_resolution(git_repo, capsys):
 
     assert result == 0
     assert capsys.readouterr().out == 'print("foo")\n'
+
+
+def test_long_command_length(git_repo):
+    """Large amount of changed files does not break Git invocation even on Windows"""
+    # For PR #542 - large character count for changed files
+    # on windows breaks subprocess
+    # Need to exceed 32762 characters
+    files = {}
+    path = "src"
+    for _f in range(0, 4):
+        # Of course windows limits the path length too
+        path = f"{path}/{randomword(30)}"
+
+    for _d in range(0, 210):
+        files[f"{path}/{randomword(30)}.py"] = randomword(10)
+
+    git_repo.add(files, commit="Add all the files")
+    result = darker.__main__.main(["--diff", "--check", "src"])
+    assert result == 0

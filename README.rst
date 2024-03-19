@@ -22,9 +22,9 @@
 .. |changelog-badge| image:: https://img.shields.io/badge/-change%20log-purple
    :alt: Change log
 .. _changelog-badge: https://github.com/akaihola/darker/blob/master/CHANGES.rst
-.. |next-milestone| image:: https://img.shields.io/github/milestones/progress/akaihola/darker/23?color=red&label=release%201.7.2
+.. |next-milestone| image:: https://img.shields.io/github/milestones/progress/akaihola/darker/21?color=red&label=release%202.1.0
    :alt: Next milestone
-.. _next-milestone: https://github.com/akaihola/darker/milestone/23
+.. _next-milestone: https://github.com/akaihola/darker/milestone/21
 
 
 What?
@@ -137,11 +137,11 @@ How?
 
 To install or upgrade, use::
 
-  pip install --upgrade darker~=1.7.1
+  pip install --upgrade darker~=2.0.0
 
 Or, if you're using Conda_ for package management::
 
-  conda install -c conda-forge darker~=1.7.1 isort
+  conda install -c conda-forge darker~=2.0.0 isort
   conda update -c conda-forge darker
 
 ..
@@ -323,34 +323,14 @@ The following `command line arguments`_ can also be used to modify the defaults:
        revision range from the ``PRE_COMMIT_FROM_REF`` and ``PRE_COMMIT_TO_REF``
        environment variables. If those are not found, Darker works against ``HEAD``.
        Also see ``--stdin-filename=`` for the ``:STDIN:`` special value.
---diff
-       Don't write the files back, just output a diff for each file on stdout. Highlight
-       syntax if on a terminal and the ``pygments`` package is available, or if enabled
-       by configuration.
--d, --stdout
-       Force complete reformatted output to stdout, instead of in-place. Only valid if
-       there's just one file to reformat. Highlight syntax if on a terminal and the
-       ``pygments`` package is available, or if enabled by configuration.
 --stdin-filename PATH
        The path to the file when passing it through stdin. Useful so Darker can find the
        previous version from Git. Only valid with ``--revision=<rev1>..:STDIN:``
        (``HEAD..:STDIN:`` being the default if ``--stdin-filename`` is enabled).
---check
-       Don't write the files back, just return the status. Return code 0 means nothing
-       would change. Return code 1 means some files would be reformatted.
--f, --flynt
-       Also convert string formatting to use f-strings using the ``flynt`` package
--i, --isort
-       Also sort imports using the ``isort`` package
--L CMD, --lint CMD
-       Also run a linter on changed files. ``CMD`` can be a name or path of the linter
-       binary, or a full quoted command line with the command and options. Linters read
-       their configuration as normally, and aren't affected by ``-c`` / ``--config``.
-       Linter output is syntax highlighted when the ``pygments`` package is available if
-       run on a terminal and or enabled by explicitly (see ``--color``).
 -c PATH, --config PATH
-       Ask ``black`` and ``isort`` to read configuration from ``PATH``. Note that other
-       tools like flynt, Mypy, Pylint and Flake8 won't use this configuration file.
+       Make ``darker``, ``black`` and ``isort`` read configuration from ``PATH``. Note
+       that other tools like ``flynt``, ``mypy``, ``pylint`` or ``flake8`` won't use
+       this configuration file.
 -v, --verbose
        Show steps taken and summarize modifications
 -q, --quiet
@@ -361,6 +341,29 @@ The following `command line arguments`_ can also be used to modify the defaults:
 --no-color
        Disable syntax highlighting even for terminal output. Overrides the environment
        variable PY_COLORS=1
+-W WORKERS, --workers WORKERS
+       How many parallel workers to allow, or ``0`` for one per core [default: 1]
+--diff
+       Don't write the files back, just output a diff for each file on stdout. Highlight
+       syntax if on a terminal and the ``pygments`` package is available, or if enabled
+       by configuration.
+-d, --stdout
+       Force complete reformatted output to stdout, instead of in-place. Only valid if
+       there's just one file to reformat. Highlight syntax if on a terminal and the
+       ``pygments`` package is available, or if enabled by configuration.
+--check
+       Don't write the files back, just return the status. Return code 0 means nothing
+       would change. Return code 1 means some files would be reformatted.
+-f, --flynt
+       Also convert string formatting to use f-strings using the ``flynt`` package
+-i, --isort
+       Also sort imports using the ``isort`` package
+-L CMD, --lint CMD
+       Run a linter on changed files. ``CMD`` can be a name or path of the linter
+       binary, or a full quoted command line with the command and options. Linters read
+       their configuration as normally, and aren't affected by ``-c`` / ``--config``.
+       Linter output is syntax highlighted when the ``pygments`` package is available if
+       run on a terminal and or enabled by explicitly (see ``--color``).
 -S, --skip-string-normalization
        Don't normalize string quotes or prefixes
 --no-skip-string-normalization
@@ -373,10 +376,8 @@ The following `command line arguments`_ can also be used to modify the defaults:
 -l LENGTH, --line-length LENGTH
        How many characters per line to allow [default: 88]
 -t VERSION, --target-version VERSION
-       [py33|py34|py35|py36|py37|py38|py39|py310|py311] Python versions that should be
-       supported by Black's output. [default: per-file auto-detection]
--W WORKERS, --workers WORKERS
-       How many parallel workers to allow, or ``0`` for one per core [default: 1]
+       [py33|py34|py35|py36|py37|py38|py39|py310|py311|py312] Python versions that
+       should be supported by Black's output. [default: per-file auto-detection]
 
 To change default values for these options for a given project,
 add a ``[tool.darker]`` or ``[tool.black]`` section to ``pyproject.toml`` in the
@@ -404,7 +405,7 @@ project's root directory, or to a different TOML file specified using the ``-c``
    line-length = 88                  # Overridden by [tool.darker] above
    skip-magic-trailing-comma = false
    skip-string-normalization = false
-   target-version = ['py311']
+   target-version = ["py38", "py39", "py310", "py311", "py312"]
    exclude = "test_*\.py"
    extend_exclude = "/generated/"
    force_exclude = ".*\.pyi"
@@ -638,7 +639,7 @@ do the following:
    .. code-block:: yaml
 
       - repo: https://github.com/akaihola/darker
-        rev: 1.7.1
+        rev: 2.0.0
         hooks:
           - id: darker
 
@@ -657,14 +658,17 @@ other reformatter/linter tools you use to known compatible versions, for example
 .. code-block:: yaml
 
    - repo: https://github.com/akaihola/darker
-     rev: 1.7.1
+     rev: 2.0.0
      hooks:
        - id: darker
          args:
            - --isort
-           - --lint mypy
-           - --lint flake8
-           - --lint pylint
+           - --lint
+           - mypy
+           - --lint
+           - flake8
+           - --lint
+           - pylint
          additional_dependencies:
            - black==22.12.0
            - isort==5.11.4
@@ -685,7 +689,7 @@ Note the inclusion of the isort Python package under ``additional_dependencies``
 .. code-block:: yaml
 
    - repo: https://github.com/akaihola/darker
-     rev: 1.7.1
+     rev: 2.0.0
      hooks:
        - id: darker
          args: [--isort]
@@ -726,15 +730,15 @@ Create a file named ``.github/workflows/darker.yml`` inside your repository with
      lint:
        runs-on: ubuntu-latest
        steps:
-         - uses: actions/checkout@v3
+         - uses: actions/checkout@v4
            with:
              fetch-depth: 0 
-         - uses: actions/setup-python@v4
-         - uses: akaihola/darker@1.7.1
+         - uses: actions/setup-python@v5
+         - uses: akaihola/darker@2.0.0
            with:
              options: "--check --diff --isort --color"
              src: "./src"
-             version: "~=1.7.1"
+             version: "~=2.0.0"
              lint: "flake8,pylint==2.13.1"
 
 There needs to be a working Python environment, set up using ``actions/setup-python``
@@ -807,7 +811,7 @@ command or a full command line to pass to a linter. Some examples:
 
 - ``-L flake8``: enforce the Python style guide using Flake8_
 - ``-L "mypy --strict"``: do static type checking using Mypy_
-- ``--lint="pylint --ignore='setup.py'""``: analyze code using Pylint_
+- ``--lint="pylint --ignore='setup.py'"``: analyze code using Pylint_
 - ``-L cov_to_lint.py``: read ``.coverage`` and list non-covered modified lines
 
 **Note:** Full command lines aren't fully tested on Windows. See issue `#456`_ for a
@@ -1016,6 +1020,18 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/issues?q=author%3Aagandra" title="Bug reports">🐛</a>
        </td>
        <td align="center">
+         <a href="https://github.com/kedhammar">
+           <img src="https://avatars.githubusercontent.com/u/89784800?v=3" width="100px;" alt="@kedhammar" />
+           <br />
+           <sub>
+             <b>Alfred Kedhammar</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/discussions?discussions_q=author%3Akedhammar" title="Bug reports">🐛</a>
+         <a href="https://github.com/akaihola/darker/issues?q=author%3Akedhammar" title="Bug reports">🐛</a>
+       </td>
+       <td align="center">
          <a href="https://github.com/aljazerzen">
            <img src="https://avatars.githubusercontent.com/u/11072061?v=3" width="100px;" alt="@aljazerzen" />
            <br />
@@ -1042,6 +1058,19 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/commits?author=akaihola" title="Maintenance">🚧</a>
        </td>
        <td align="center">
+         <a href="https://github.com/Ashblaze">
+           <img src="https://avatars.githubusercontent.com/u/25725925?v=3" width="100px;" alt="@Ashblaze" />
+           <br />
+           <sub>
+             <b>Ashblaze</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/discussions?discussions_q=author%3AAshblaze" title="Bug reports">🐛</a>
+       </td>
+     </tr>
+     <tr>
+       <td align="center">
          <a href="https://github.com/levouh">
            <img src="https://avatars.githubusercontent.com/u/31262046?v=3" width="100px;" alt="@levouh" />
            <br />
@@ -1064,8 +1093,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3AAckslD" title="Bug reports">🐛</a>
        </td>
-     </tr>
-     <tr>
+       <td align="center">
+         <a href="https://github.com/baod-rate">
+           <img src="https://avatars.githubusercontent.com/u/6306455?v=3" width="100px;" alt="@baod-rate" />
+           <br />
+           <sub>
+             <b>Bao</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Abaod-rate" title="Code">💻</a>
+       </td>
        <td align="center">
          <a href="https://github.com/qubidt">
            <img src="https://avatars.githubusercontent.com/u/6306455?v=3" width="100px;" alt="@qubidt" />
@@ -1087,6 +1125,7 @@ Thanks goes to these wonderful people (`emoji key`_):
          </a>
          <br />
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Afalkben" title="Documentation">📖</a>
+         <a href="https://github.com/akaihola/darker/discussions?discussions_q=author%3Afalkben" title="Bug reports">🐛</a>
        </td>
        <td align="center">
          <a href="https://github.com/brtknr">
@@ -1099,6 +1138,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+reviewed-by%3Abrtknr" title="Reviewed Pull Requests">👀</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/bdperkin">
            <img src="https://avatars.githubusercontent.com/u/3385145?v=3" width="100px;" alt="@bdperkin" />
@@ -1122,6 +1163,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/issues?q=author%3Acasio" title="Bug reports">🐛</a>
        </td>
        <td align="center">
+         <a href="https://github.com/mrfroggg">
+           <img src="https://avatars.githubusercontent.com/u/35123233?v=3" width="100px;" alt="@mrfroggg" />
+           <br />
+           <sub>
+             <b>Cedric</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/search?q=commenter%3Amrfroggg&type=issues" title="Bug reports">🐛</a>
+       </td>
+       <td align="center">
          <a href="https://github.com/chmouel">
            <img src="https://avatars.githubusercontent.com/u/98980?v=3" width="100px;" alt="@chmouel" />
            <br />
@@ -1133,8 +1185,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Achmouel" title="Code">💻</a>
          <a href="https://github.com/akaihola/darker/issues?q=author%3Achmouel" title="Bug reports">🐛</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/cclauss">
            <img src="https://avatars.githubusercontent.com/u/3709715?v=3" width="100px;" alt="@cclauss" />
@@ -1158,6 +1208,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Achrisdecker1201" title="Code">💻</a>
          <a href="https://github.com/akaihola/darker/issues?q=author%3Achrisdecker1201" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/KangOl">
            <img src="https://avatars.githubusercontent.com/u/38731?v=3" width="100px;" alt="@KangOl" />
@@ -1183,6 +1235,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+reviewed-by%3ACorreyL" title="Reviewed Pull Requests">👀</a>
        </td>
        <td align="center">
+         <a href="https://github.com/dkeraudren">
+           <img src="https://avatars.githubusercontent.com/u/82873215?v=3" width="100px;" alt="@dkeraudren" />
+           <br />
+           <sub>
+             <b>Damien Keraudren</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/search?q=commenter%3Adkeraudren&type=issues" title="Bug reports">🐛</a>
+       </td>
+       <td align="center">
          <a href="https://github.com/fizbin">
            <img src="https://avatars.githubusercontent.com/u/4110350?v=3" width="100px;" alt="@fizbin" />
            <br />
@@ -1204,8 +1267,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3ADavidCDreher" title="Bug reports">🐛</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/shangxiao">
            <img src="https://avatars.githubusercontent.com/u/1845938?v=3" width="100px;" alt="@shangxiao" />
@@ -1218,6 +1279,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Ashangxiao" title="Code">💻</a>
          <a href="https://github.com/akaihola/darker/issues?q=author%3Ashangxiao" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/dhrvjha">
            <img src="https://avatars.githubusercontent.com/u/43818577?v=3" width="100px;" alt="@dhrvjha" />
@@ -1229,6 +1292,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/search?q=commenter%3Adhrvjha&type=issues" title="Bug reports">🐛</a>
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Adhrvjha" title="Code">💻</a>
+       </td>
+       <td align="center">
+         <a href="https://github.com/dshemetov">
+           <img src="https://avatars.githubusercontent.com/u/1810426?v=3" width="100px;" alt="@dshemetov" />
+           <br />
+           <sub>
+             <b>Dmitry Shemetov</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/issues?q=author%3Adshemetov" title="Bug reports">🐛</a>
        </td>
        <td align="center">
          <a href="https://github.com/k-dominik">
@@ -1277,6 +1351,17 @@ Thanks goes to these wonderful people (`emoji key`_):
      </tr>
      <tr>
        <td align="center">
+         <a href="https://github.com/Eyobkibret15">
+           <img src="https://avatars.githubusercontent.com/u/64076953?v=3" width="100px;" alt="@Eyobkibret15" />
+           <br />
+           <sub>
+             <b>Eyob Kibret</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/discussions?discussions_q=author%3AEyobkibret15" title="Bug reports">🐛</a>
+       </td>
+       <td align="center">
          <a href="https://github.com/philipgian">
            <img src="https://avatars.githubusercontent.com/u/6884633?v=3" width="100px;" alt="@philipgian" />
            <br />
@@ -1310,6 +1395,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Agdiscry" title="Code">💻</a>
        </td>
        <td align="center">
+         <a href="https://github.com/gergelypolonkai">
+           <img src="https://avatars.githubusercontent.com/u/264485?v=3" width="100px;" alt="@gergelypolonkai" />
+           <br />
+           <sub>
+             <b>Gergely Polonkai</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/issues?q=author%3Agergelypolonkai" title="Bug reports">🐛</a>
+       </td>
+       <td align="center">
          <a href="https://github.com/muggenhor">
            <img src="https://avatars.githubusercontent.com/u/484066?v=3" width="100px;" alt="@muggenhor" />
            <br />
@@ -1320,6 +1416,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/commits?author=muggenhor" title="Code">💻</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/jabesq">
            <img src="https://avatars.githubusercontent.com/u/12049794?v=3" width="100px;" alt="@jabesq" />
@@ -1343,8 +1441,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Ahugovk" title="Code">💻</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/irynahryshanovich">
            <img src="https://avatars.githubusercontent.com/u/62266480?v=3" width="100px;" alt="@irynahryshanovich" />
@@ -1390,6 +1486,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Ajedie" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/jenshnielsen">
            <img src="https://avatars.githubusercontent.com/u/548266?v=3" width="100px;" alt="@jenshnielsen" />
@@ -1412,8 +1510,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Awkentaro" title="Bug reports">🐛</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/Asuskf">
            <img src="https://avatars.githubusercontent.com/u/36687747?v=3" width="100px;" alt="@Asuskf" />
@@ -1458,6 +1554,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Amagnunm" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/markddavidoff">
            <img src="https://avatars.githubusercontent.com/u/1360543?v=3" width="100px;" alt="@markddavidoff" />
@@ -1470,6 +1568,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/issues?q=author%3Amarkddavidoff" title="Bug reports">🐛</a>
        </td>
        <td align="center">
+         <a href="https://github.com/dwt">
+           <img src="https://avatars.githubusercontent.com/u/57199?v=3" width="100px;" alt="@dwt" />
+           <br />
+           <sub>
+             <b>Martin Häcker</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/issues?q=author%3Adwt" title="Bug reports">🐛</a>
+       </td>
+       <td align="center">
          <a href="https://github.com/matclayton">
            <img src="https://avatars.githubusercontent.com/u/126218?v=3" width="100px;" alt="@matclayton" />
            <br />
@@ -1480,8 +1589,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Amatclayton" title="Bug reports">🐛</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/Carreau">
            <img src="https://avatars.githubusercontent.com/u/335567?v=3" width="100px;" alt="@Carreau" />
@@ -1516,6 +1623,19 @@ Thanks goes to these wonderful people (`emoji key`_):
          </a>
          <br />
          <a href="https://github.com/conda-forge/darker-feedstock/search?q=darker+author%3Aminrk&type=issues" title="Code">💻</a>
+       </td>
+     </tr>
+     <tr>
+       <td align="center">
+         <a href="https://github.com/my-tien">
+           <img src="https://avatars.githubusercontent.com/u/3898364?v=3" width="100px;" alt="@my-tien" />
+           <br />
+           <sub>
+             <b>My-Tien Nguyen</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/issues?q=author%3Amy-tien" title="Bug reports">🐛</a>
        </td>
        <td align="center">
          <a href="https://github.com/Mystic-Mirage">
@@ -1553,8 +1673,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Awasdee" title="Bug reports">🐛</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/Pacu2">
            <img src="https://avatars.githubusercontent.com/u/21290461?v=3" width="100px;" alt="@Pacu2" />
@@ -1578,6 +1696,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/discussions?discussions_q=author%3APatrickJordanCongenica" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/ivanov">
            <img src="https://avatars.githubusercontent.com/u/118211?v=3" width="100px;" alt="@ivanov" />
@@ -1624,8 +1744,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/search?q=RishiKumarRay" title="Bug reports">🐛</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/ioggstream">
            <img src="https://avatars.githubusercontent.com/u/1140844?v=3" width="100px;" alt="@ioggstream" />
@@ -1648,6 +1766,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Aroniemartinez" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/rossbar">
            <img src="https://avatars.githubusercontent.com/u/1268991?v=3" width="100px;" alt="@rossbar" />
@@ -1658,6 +1778,28 @@ Thanks goes to these wonderful people (`emoji key`_):
          </a>
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Arossbar" title="Bug reports">🐛</a>
+       </td>
+       <td align="center">
+         <a href="https://github.com/sgaist">
+           <img src="https://avatars.githubusercontent.com/u/898010?v=3" width="100px;" alt="@sgaist" />
+           <br />
+           <sub>
+             <b>Samuel Gaist</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3Asgaist" title="Code">💻</a>
+       </td>
+       <td align="center">
+         <a href="https://github.com/seweissman">
+           <img src="https://avatars.githubusercontent.com/u/3342741?v=3" width="100px;" alt="@seweissman" />
+           <br />
+           <sub>
+             <b>Sarah</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/issues?q=author%3Aseweissman" title="Bug reports">🐛</a>
        </td>
        <td align="center">
          <a href="https://github.com/sherbie">
@@ -1717,6 +1859,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/issues?q=author%3Astrzonnek" title="Bug reports">🐛</a>
        </td>
        <td align="center">
+         <a href="https://github.com/Svenito">
+           <img src="https://avatars.githubusercontent.com/u/31278?v=3" width="100px;" alt="@Svenito" />
+           <br />
+           <sub>
+             <b>Sven Steinbauer</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+author%3ASvenito" title="Code">💻</a>
+       </td>
+       <td align="center">
          <a href="https://github.com/tkolleh">
            <img src="https://avatars.githubusercontent.com/u/3095197?v=3" width="100px;" alt="@tkolleh" />
            <br />
@@ -1749,6 +1902,19 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Aguettli" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
+       <td align="center">
+         <a href="https://github.com/Timple">
+           <img src="https://avatars.githubusercontent.com/u/5036851?v=3" width="100px;" alt="@Timple" />
+           <br />
+           <sub>
+             <b>Tim Clephas</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/search?q=commenter%3ATimple&type=issues" title="Bug reports">🐛</a>
+       </td>
        <td align="center">
          <a href="https://github.com/tobiasdiez">
            <img src="https://avatars.githubusercontent.com/u/5037600?v=3" width="100px;" alt="@tobiasdiez" />
@@ -1759,8 +1925,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          </a>
          <br />
        </td>
-     </tr>
-     <tr>
+       <td align="center">
+         <a href="https://github.com/tapted">
+           <img src="https://avatars.githubusercontent.com/u/1721312?v=3" width="100px;" alt="@tapted" />
+           <br />
+           <sub>
+             <b>Trent Apted</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/issues?q=author%3Atapted" title="Bug reports">🐛</a>
+       </td>
        <td align="center">
          <a href="https://github.com/tgross35">
            <img src="https://avatars.githubusercontent.com/u/13724985?v=3" width="100px;" alt="@tgross35" />
@@ -1795,6 +1970,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/issues?q=author%3Ayoursvivek" title="Bug reports">🐛</a>
          <a href="https://github.com/akaihola/darker/commits?author=yoursvivek" title="Documentation">📖</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/Hainguyen1210">
            <img src="https://avatars.githubusercontent.com/u/15359217?v=3" width="100px;" alt="@Hainguyen1210" />
@@ -1829,8 +2006,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/issues?q=author%3Awpnbos" title="Bug reports">🐛</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/zachnorton4C">
            <img src="https://avatars.githubusercontent.com/u/49661202?v=3" width="100px;" alt="@zachnorton4C" />
@@ -1843,6 +2018,17 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/akaihola/darker/issues?q=author%3Azachnorton4C" title="Bug reports">🐛</a>
        </td>
        <td align="center">
+         <a href="https://github.com/clintonsteiner">
+           <img src="https://avatars.githubusercontent.com/u/47841949?v=3" width="100px;" alt="@clintonsteiner" />
+           <br />
+           <sub>
+             <b>csteiner</b>
+           </sub>
+         </a>
+         <br />
+         <a href="https://github.com/akaihola/darker/issues?q=author%3Aclintonsteiner" title="Bug reports">🐛</a>
+       </td>
+       <td align="center">
          <a href="https://github.com/deadkex">
            <img src="https://avatars.githubusercontent.com/u/59506422?v=3" width="100px;" alt="@deadkex" />
            <br />
@@ -1853,6 +2039,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/discussions?discussions_q=author%3Adeadkex" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/dsmanl">
            <img src="https://avatars.githubusercontent.com/u/67360039?v=3" width="100px;" alt="@dsmanl" />
@@ -1898,8 +2086,6 @@ Thanks goes to these wonderful people (`emoji key`_):
          <a href="https://github.com/conda-forge/staged-recipes/search?q=darker&type=issues&author=martinRenou" title="Code">💻</a>
          <a href="https://github.com/akaihola/darker/pulls?q=is%3Apr+reviewed-by%3AmartinRenou" title="Reviewed Pull Requests">👀</a>
        </td>
-     </tr>
-     <tr>
        <td align="center">
          <a href="https://github.com/mayk0gan">
            <img src="https://avatars.githubusercontent.com/u/96263702?v=3" width="100px;" alt="@mayk0gan" />
@@ -1922,6 +2108,8 @@ Thanks goes to these wonderful people (`emoji key`_):
          <br />
          <a href="https://github.com/akaihola/darker/search?q=commenter%3Aokuuva&type=issues" title="Bug reports">🐛</a>
        </td>
+     </tr>
+     <tr>
        <td align="center">
          <a href="https://github.com/overratedpro">
            <img src="https://avatars.githubusercontent.com/u/1379994?v=3" width="100px;" alt="@overratedpro" />
